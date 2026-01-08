@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Story App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: sans-serif; background:#111; color:#fff; }
+    button { padding:10px; margin:5px; }
+  </style>
+</head>
+<body>
+  <h3>Сюжет</h3>
+  <div id="chat"></div>
+
+  <input id="text" placeholder="Написать..." />
+  <button onclick="send()">Отправить</button>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    function send() {
+      const text = document.getElementById("text").value;
+      tg.sendData(JSON.stringify({ text }));
+      document.getElementById("text").value = "";
+    }
+  </script>
+</body>
+</html>
