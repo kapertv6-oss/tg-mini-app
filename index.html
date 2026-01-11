@@ -2,143 +2,52 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AniLabs</title>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <style>
-/* ——— styles без изменений ——— */
-:root{
-  --bg:#070b18;--bg2:#0c1330;--glass:rgba(255,255,255,.08);
-  --border:rgba(255,255,255,.15);--accent:#6ee7ff;
-  --accent2:#a78bfa;--text:#fff;--muted:#aab0d6;
-}
-*{box-sizing:border-box;font-family:system-ui}
-body{margin:0;background:radial-gradient(circle at top,var(--bg2),var(--bg));color:var(--text)}
-.screen{display:none}.screen.active{display:block}
-.header{padding:18px;font-size:22px;font-weight:700;
-background:linear-gradient(90deg,var(--accent),var(--accent2));
--webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.back{padding:12px;color:var(--accent)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px}
-.card{background:var(--glass);border:1px solid var(--border);border-radius:20px;padding:16px}
-.card-title{font-weight:600}.card-sub{font-size:13px;color:var(--muted)}
-.chat{padding:16px;padding-bottom:160px}
-.msg{max-width:80%;margin-bottom:10px;padding:10px 14px;border-radius:16px;font-size:14px}
-.user{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#000;margin-left:auto}
-.bot{background:var(--glass);border:1px solid var(--border)}
-.input-box{position:fixed;bottom:64px;left:0;right:0;padding:12px;display:flex;gap:10px;background:#0a0e28}
-.input-box input{flex:1;padding:12px;border-radius:14px;border:none}
-.input-box button{padding:12px 18px;border-radius:14px;border:none;
-background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:#0a0e28;
-display:flex;justify-content:space-around;align-items:center}
-.avatar{width:48px;height:48px;border-radius:50%;background-size:cover;margin-bottom:8px}
-.hidden{display:none}
+body{background:#0b0f1f;color:#fff;font-family:sans-serif;margin:0}
+.msg{padding:10px;margin:6px;border-radius:12px;max-width:80%}
+.user{background:#6ee7ff;color:#000;margin-left:auto}
+.bot{background:#1a1f3c}
+input{width:80%;padding:10px}
+button{padding:10px}
 </style>
 </head>
 
 <body>
+<h2 id="name">Риас Гремори</h2>
+<div id="chat"></div>
 
-<div class="screen active" id="home">
-  <div class="header">AniLabs</div>
-  <div class="grid">
-    <div class="card" onclick="openScreen('profile')">👤 Профиль</div>
-    <div class="card" onclick="openScreen('characters')">🧍 Персонажи</div>
-  </div>
-</div>
-
-<div class="screen" id="profile">
-  <div class="back" onclick="openScreen('home')">← Назад</div>
-  <div class="header">Профиль</div>
-  <div class="grid">
-    <div class="card">🔮 Токены<br><span id="tokens"></span></div>
-    <div class="card">📊 Сообщения<br><span id="statsText"></span></div>
-  </div>
-</div>
-
-<div class="screen" id="characters">
-  <div class="back" onclick="openScreen('home')">← Назад</div>
-  <div class="header">Персонажи</div>
-  <div class="grid" id="characterList"></div>
-</div>
-
-<div class="screen" id="chat">
-  <div class="back" onclick="openScreen('characters')">← Назад</div>
-  <div class="header" id="chatName"></div>
-  <div class="chat" id="chatMessages"></div>
-  <div class="input-box">
-    <input id="chatInput" placeholder="Сообщение..." />
-    <button onclick="sendMessage()">➤</button>
-  </div>
-</div>
+<input id="text" placeholder="Сообщение">
+<button onclick="send()">➤</button>
 
 <script>
-const characters=[
- {name:'Риас Гремори',avatar:'https://i.imgur.com/6Z8FJ9M.png'},
- {name:'Йор Форджер',avatar:'https://i.imgur.com/8zQ7Z8L.png'}
-];
+const API = "https://shelba-hardenable-bell.ngrok-free.dev/chat";
+let character = "Риас Гремори";
 
-let current=null;
-let tokens=Number(localStorage.getItem('tokens'))||5;
-let stats=JSON.parse(localStorage.getItem('stats'))||{sent:0,received:0};
-
-function openScreen(id){
- document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
- document.getElementById(id).classList.add('active');updateProfile();
+function add(text, cls){
+  const d = document.createElement("div");
+  d.className = "msg " + cls;
+  d.innerText = text;
+  chat.appendChild(d);
+  d.scrollIntoView();
 }
 
-function renderCharacters(){
- characterList.innerHTML='';
- characters.forEach(c=>{
-  const d=document.createElement('div');
-  d.className='card';
-  d.innerHTML=`<div class="avatar" style="background-image:url(${c.avatar})"></div>${c.name}`;
-  d.onclick=()=>openChat(c);
-  characterList.appendChild(d);
- });
+async function send(){
+  const t = text.value.trim();
+  if(!t) return;
+  add(t,"user");
+  text.value="";
+
+  const r = await fetch(API,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ character, message:t })
+  });
+  const j = await r.json();
+  add(j.reply,"bot");
 }
-
-function openChat(c){
- current=c;chatName.textContent=c.name;chatMessages.innerHTML='';
- openScreen('chat');
-}
-
-async function sendMessage(){
- const text=chatInput.value.trim();
- if(!text) return;
- if(tokens<=0){alert('Нужен хотя бы один токен');return;}
-
- addMessage(text,'user');chatInput.value='';
- const res=await fetch('https://shelba-hardenable-bell.ngrok-free.dev/chat',{
-  method:'POST',
-  headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({character:current.name,message:text})
- });
- const data=await res.json();
- tokens--;stats.sent++;stats.received++;
- addMessage(data.reply,'bot');
- localStorage.setItem('tokens',tokens);
- localStorage.setItem('stats',JSON.stringify(stats));
- updateProfile();
-}
-
-function addMessage(t,type){
- const d=document.createElement('div');
- d.className='msg '+type;d.textContent=t;
- chatMessages.appendChild(d);
- d.scrollIntoView();
-}
-
-function updateProfile(){
- tokensEl=document.getElementById('tokens');
- if(tokensEl) tokensEl.textContent=tokens;
- statsText.textContent=`${stats.sent}/${stats.received}`;
-}
-
-renderCharacters();updateProfile();
 </script>
-
 </body>
 </html>
+
