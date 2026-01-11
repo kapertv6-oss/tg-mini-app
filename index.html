@@ -3,53 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <title>AniLabs</title>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
-body{background:#0b0f1f;color:#fff;font-family:sans-serif;margin:0}
-.msg{padding:10px;margin:6px;border-radius:12px;max-width:80%}
-.user{background:#6ee7ff;color:#000;margin-left:auto}
-.bot{background:#1a1f3c}
-input{width:80%;padding:10px}
-button{padding:10px}
+body{
+  background:#0b0f1f;
+  color:#fff;
+  font-family:sans-serif;
+  margin:0;
+  padding:12px;
+}
+#chat{margin-bottom:80px}
+.msg{
+  padding:10px;
+  margin:6px;
+  border-radius:12px;
+  max-width:80%;
+  font-size:14px;
+}
+.user{
+  background:#6ee7ff;
+  color:#000;
+  margin-left:auto;
+}
+.bot{
+  background:#1a1f3c;
+  border:1px solid rgba(255,255,255,.1);
+}
+.input{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  display:flex;
+  gap:8px;
+  padding:10px;
+  background:#0b0f1f;
+}
+input{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+}
+button{
+  padding:10px 16px;
+  border-radius:10px;
+  border:none;
+  background:#6ee7ff;
+}
 </style>
 </head>
 
 <body>
+
 <h2 id="name">Риас Гремори</h2>
 <div id="chat"></div>
 
-<input id="text" placeholder="Сообщение">
-<button onclick="send()">➤</button>
+<div class="input">
+  <input id="text" placeholder="Сообщение">
+  <button onclick="send()">➤</button>
+</div>
 
 <script>
-const API = "https://anilabs.onrender.com";
-let character = "Риас Гремори";
+const API = "https://anilabs.onrender.com/chat"; // ✅ ВАЖНО
+const character = "Риас Гремори";
 
 function add(text, cls){
   const d = document.createElement("div");
   d.className = "msg " + cls;
-  d.innerText = text;
+  d.textContent = text;
   chat.appendChild(d);
-  d.scrollIntoView();
+  d.scrollIntoView({behavior:"smooth"});
 }
 
 async function send(){
   const t = text.value.trim();
   if(!t) return;
+
   add(t,"user");
   text.value="";
 
-  const r = await fetch(API,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ character, message:t })
-  });
-  const j = await r.json();
-  add(j.reply,"bot");
+  try{
+    const r = await fetch(API,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        character: character,
+        message: t
+      })
+    });
+
+    const j = await r.json();
+    add(j.reply || "Ошибка ответа ИИ","bot");
+
+  }catch(e){
+    add("Сервер недоступен","bot");
+  }
 }
 </script>
+
 </body>
 </html>
-
-
-
